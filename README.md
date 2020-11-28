@@ -18,4 +18,4 @@ QTimer类的学习
 QStandardItemModel类的学习  
   
     
-    ![image](https://github.com/adezz/mysql_monitor_tool/blob/master/pic/one.png)
+![image](https://github.com/adezz/mysql_monitor_tool/blob/master/pic/one.png?raw=true)
