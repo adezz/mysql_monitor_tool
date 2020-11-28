@@ -16,3 +16,6 @@ QSqlQuery类的学习
 QTimer类的学习  
 
 QStandardItemModel类的学习  
+  
+    
+    ![image](https://github.com/adezz/mysql_monitor_tool/blob/master/pic/one.png)
