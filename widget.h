@@ -2,7 +2,6 @@
 #define WIDGET_H
 
 #include <QWidget>
-#include <QStringListModel>
 #include <QStandardItemModel>
 #include <QModelIndex>
 #include <QFile>
@@ -19,18 +18,20 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
-    QStringListModel* listmodel;
     QStandardItemModel* itemModel;
     QSqlDatabase db;
     QString logpath;
+
+public:
+    void showLog();
+    void init();
+    void initDatabase();
+    void verifyFileOpen(QFile& file);
 
 private slots:
     void on_pushButton_clicked();
     void on_pushButton_2_clicked();
     void showClick(QModelIndex index);
-    void showLog();
-    void init();
-    void initDatabase();
     void update();
 
 private:

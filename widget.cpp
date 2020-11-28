@@ -1,12 +1,12 @@
 #include "widget.h"
 #include "ui_widget.h"
 
+#include "sqlstruct.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QMessageBox>
 #include <QDebug>
-#include <QFile>
 #include <QTimer>
+#include <QRegExp>
 
 
 Widget::Widget(QWidget *parent) :QWidget(parent),ui(new Ui::Widget)
@@ -48,7 +48,20 @@ void Widget::init()
 {
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->start(3000);
+    timer->start(5000);
+
+    itemModel = new QStandardItemModel(this);
+    itemModel->setColumnCount(3);
+    itemModel->setHeaderData(0,Qt::Horizontal, "Time");
+    itemModel->setHeaderData(1,Qt::Horizontal, "Command");
+    itemModel->setHeaderData(2,Qt::Horizontal, "Argument");
+    ui->tableView->setModel(itemModel);
+    ui->tableView->verticalHeader()->hide();
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableView->horizontalHeader()->setSectionResizeMode(0,QHeaderView::ResizeToContents);
+    ui->tableView->horizontalHeader()->setSectionResizeMode(1,QHeaderView::ResizeToContents);
 }
 
 void Widget::initDatabase()
@@ -60,11 +73,10 @@ void Widget::initDatabase()
 
     db = QSqlDatabase::addDatabase("QMYSQL");
     db.setHostName(host_txt.toLatin1());
-//    db.setHostName("127.0.0.1");
-    db.setPort(3306);
-    db.setDatabaseName("mysql");
     db.setUserName(user_txt.toLatin1());
     db.setPassword(pass_txt.toLatin1());
+    db.setPort(3306);
+    db.setDatabaseName("mysql");
     if(db.open())
         qDebug()<<"Hi mysql!";
     else
@@ -72,7 +84,7 @@ void Widget::initDatabase()
 
     if(!db.isOpen())
     {
-        qDebug()<<"db inot isOpen!";
+        qDebug()<<"db is not isOpen!";
         db.close();
         return;
     }
@@ -82,7 +94,6 @@ void Widget::initDatabase()
 
 void Widget::on_pushButton_clicked()
 {
-
     QSqlQuery query;
     QString name;
     QString value;
@@ -104,6 +115,15 @@ void Widget::on_pushButton_clicked()
         }
     }
 
+    verifyFileOpen(file);
+
+    file.close();
+    ui->pushButton->setDisabled(true);
+    ui->pushButton->setText("已连接");
+}
+
+void Widget::verifyFileOpen(QFile& file)
+{
     if(!file.exists()){
         qDebug()<<"file is not exists!";
         db.close();
@@ -116,13 +136,19 @@ void Widget::on_pushButton_clicked()
         return;
     }
 
-    file.close();
-    ui->pushButton->setDisabled(true);
-    ui->pushButton->setText("已连接");
 }
 
 void Widget::on_pushButton_2_clicked()
 {
+    QFile file(logpath);
+    if(!file.open(QFile::Truncate|QFile::WriteOnly)){
+        qDebug()<<"fail to open file!";
+        return;
+    }
+
+    QTextStream aStream(&file);
+    aStream<<"";
+    file.close();
     showLog();
 }
 
@@ -136,17 +162,7 @@ void Widget::showLog()
     }
 
     QFile file(logpath);
-    if(!file.exists()){
-        qDebug()<<"file is not exists!";
-        db.close();
-        return;
-    }
-
-    if(!file.open(QIODevice::ReadOnly)){
-        qDebug()<<"fail to read file!";
-        db.close();
-        return;
-    }
+    verifyFileOpen(file);
 
 
     QStringList strList;
@@ -159,15 +175,33 @@ void Widget::showLog()
     }
 
     itemModel = new QStandardItemModel(this);
+    itemModel->setColumnCount(3);
+    itemModel->setHeaderData(0,Qt::Horizontal, "Time");
+    itemModel->setHeaderData(1,Qt::Horizontal, "Command");
+    itemModel->setHeaderData(2,Qt::Horizontal, "Argument");
+
+    QString sqlquery;
     for(int i = 0; i < strList.size(); i++)
     {
-        QString string = static_cast<QString>(strList.at(i));
-        QStandardItem* item = new QStandardItem(string);
-        itemModel->appendRow(item);
+        sqlquery = static_cast<QString>(strList.at(i));
+        Sqlstruct st(sqlquery);
+//        qDebug()<<sqlquery;
+        QList<QStandardItem*> list;
+//        if(st.getTime().isEmpty() && st.getCommand().isEmpty() && st.getPhrase().isEmpty()){
+//            qDebug()<<st.getTime().isEmpty();
+//            qDebug()<<st.getTime();
+//            qDebug()<<st.getCommand().isEmpty();
+//            qDebug()<<st.getCommand();
+//            qDebug()<<st.getPhrase().isEmpty();
+//            qDebug()<<st.getPhrase();
+//            qDebug()<<"--------------------";
+//            continue;
+//        }
+        list << new QStandardItem(st.getTime()) << new QStandardItem(st.getCommand()) << new QStandardItem(st.getPhrase());
+        itemModel->insertRow(i, list);
     }
 
-    ui->listView->setModel(itemModel);
-    ui->listView->scrollToBottom();
-    connect(ui->listView,SIGNAL(clicked(QModelIndex)),this,SLOT(showClick(QModelIndex)));
+    ui->tableView->setModel(itemModel);
+    ui->tableView->scrollToBottom();
     file.close();
 }
