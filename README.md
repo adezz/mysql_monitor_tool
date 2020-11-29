@@ -1,7 +1,8 @@
 # mysql_monitor_tool
 监控mysql语句的qt小工具
 
-#2020-11-19
+# 2020-11-27  
+
 功能：  
 
 1、定时刷新mysql的日志执行语句  
@@ -18,7 +19,7 @@ QTimer类的学习
 
 QStandardItemModel类的学习  
 
-#2020-11-19  
+# 2020-11-28  
 
 1、美化界面  
 
